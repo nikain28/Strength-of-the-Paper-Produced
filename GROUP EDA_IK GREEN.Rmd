@@ -1,0 +1,145 @@
+---
+title: "ANALYSIS AND VISUALIZATION"
+output: html_notebook
+---
+
+1. Insert and arrange data
+```{r}
+Hardwood <- c(rep("2",12),rep("4",12),rep("8",12))
+Time <- c(rep("3.0",6),rep("4.0",6))
+Pressure <- c(rep("400",2),rep("500",2),rep("600",2))
+Strength <- c(1.87,2.47,2.66,1.94,2.27,2.66,2.18,1.98,2.61,2.29,2.37,2.69,2.29,2.37,2.28,2.06,2.60,2.46,2.42,2.05,2.26,2.15,3.13,2.68,2.27,2.90,3.02,2.72,3.42,2.91,3.01,3.12,2.62,3.06,2.99,3.40)
+data <- data.frame(Hardwood, Time, Pressure, Strength)
+data
+```
+
+2. Analysis of variance for significant factors
+```{r}
+A=as.factor(data$Hardwood)
+B=as.factor(data$Time)
+C=as.factor(data$Pressure)
+
+results = lm(Strength ~ A + B + C + A:B + A:C + B:C + A:B:C, data = data) 
+anova(results)
+```
+A:B:C\
+$H_{0}$: There is no interaction effect between percentage of hardwood concentration, cooking time and pressure.\
+$H_{1}$: There is interaction effect between percentage of hardwood concentration, cooking time and pressure.\
+$p-value=0.4777$\
+Since ($p-value=0.4777$)$>$($\alpha=0.05$), do not reject $H_{0}$.\
+At $\alpha=0.05$, there is no interaction effect between percentage of hardwood concentration, cooking time and pressure.\
+
+Since there is no interaction effect, we have to test the effect of factor A, B, and C.\
+
+Hardwood Concentration:\
+$H_{0}$: There is no interaction effect of hardwood concentration to the tensile strength of paper.\
+$H_{1}$: There is interaction effect of hardwood concentration to the tensile strength of paper.\
+$p-value=0.0000$\
+Since ($p-value=0.0000$)$<$($\alpha=0.05$), reject $H_{0}$.\
+At $\alpha=0.05$, there is interaction effect of hardwood concentration to the tensile strength of paper.\
+
+Cooking Time:\
+$H_{0}$: There is no interaction effect of cooking time to the tensile strength of paper.\
+$H_{1}$: There is interaction effect of cooking time to the tensile strength of paper.\
+$p-value=0.2878$\
+Since ($p-value=0.2878$)$>$($\alpha=0.05$), do not reject $H_{0}$.\
+At $\alpha=0.05$, there is no interaction effect of cooking time to the tensile strength of paper.\
+
+Vat Pressure:\
+$H_{0}$: There is no interaction effect of vat pressure to the tensile strength of paper.\
+$H_{1}$: There is interaction effect of vat pressure to the tensile strength of paper.\
+$p-value=0.0069$\
+Since ($p-value=0.0069$)$<$($\alpha=0.05$), reject $H_{0}$.\
+At $\alpha=0.05$, there is interaction effect of vat pressure to the tensile strength of paper.\
+
+Hence from the hypothesis above, we can see that only percentage of hardwood concentration and pressure are significantly affect the tensile strength (kN/m) of the paper produced.\
+
+
+3. Assumption Checking\
+
+Predicted value
+```{r}
+predicted<-predict(results)
+predicted
+```
+Residuals Value 
+```{r}
+residuals<-resid(results)
+residuals
+```
+Normality plot
+```{r}
+library(ggpubr)
+ggqqplot(residuals)
+```
+From the plot, it can be seen that the residual is approximately normal as the data is scattered
+near the straight line.\
+
+Normality Test using Shapiro Wilk-Test
+```{r}
+shapiro.test(residuals)
+```
+$H_{0}$: The residuals is normally distributed.\
+$H_{1}$: The residuals is not normally distributed.\
+$p-value=0.21$\
+Since ($p-value=0.21$)$>$($\alpha=0.05$), do not reject $H_{0}$.\
+At $\alpha=0.05$, the residuals is normally distributed.\
+
+Test for the constant variance
+```{r}
+plot(predicted, residuals)
+plot(lm(residuals~predicted))
+```
+From the above residual plot, the points are scattered above and below reference line at horizontal 0. It is constant variance and model is adequate.\
+
+Check correlation of residuals using Durbin Watson Test
+```{r}
+library(car)
+durbinWatsonTest(results)
+```
+$H_{0}$ : There is no correlation among the residuals.\
+$H_{1}$ : The residuals are autocorrelated\
+$p-value = 0.152$\
+Since ($p-value=0.152$)>($\alpha=0.05$), do not reject $H_{0}$\
+At $\alpha=0.05$, there is no correlation among the residuals.\
+
+4. Main Effect Plot
+```{r}
+library(gplots) 
+plotmeans(Strength~A,xlab="Percentage of Hardwood Concentration",ylab="Mean Tensile Strength (kN/m) of Paper", main="Main effect Plot Factor A",barcol="blue")
+```
+The plot of main effect factor A shows a positive main effect which is increasing the variable moves the charges target upwards. This only means that the higher the percentage of hardwood concentration, the higher tensile strength of paper.
+
+```{r}
+plotmeans(Strength~B,xlab="Cooking Time",ylab="Mean Tensile Strength (kN/m) of Paper", main="Main effect Plot Factor B",barcol="blue")
+```
+The plot of main effect factor C shows a positive main effect which is increasing the variable moves the charges target upwards. This only means that the higher cooking time, the higher tensile strength of paper.
+
+```{r}
+plotmeans(Strength~C,xlab="Vat Pressure",ylab="Mean Tensile Strength (kN/m) of Paper", main="Main effect Plot Factor C",barcol="blue")
+```
+The plot of main effect factor B shows a positive main effect which is increasing the variable moves the charges target upwards. This only means that the higher the vat pressure, the higher tensile strength of paper.\
+
+5. Interaction Plot
+```{r}
+interaction.plot(x.factor = data$Hardwood, #x-axis variable
+trace.factor = data$Pressure, #variable for lines
+response = data$Strength, #y-axis variable
+fun = median, #metric to plot
+ylab = "Mean Tensile Strength of Paper",
+xlab = "Percentage of Hardwood Concentration",
+col = c("pink", "blue", "purple"),
+lty = 1, #line type
+lwd = 2, #line width
+trace.label = "Vat Pressure")
+```
+The significant interaction is indicated by the lack of parallelism of the lines. Changing from low to intermediate percentage of hardwood concentration, tensile strength of paper with 500 vat pressure may actually decrease, whereas it increase for vat pressure 400 and 600. From intermediate to high percentage of hardwood concentration, the tensile strength of paper increase for all vat pressure. To produce premium paper with high quality that is stronger, the company should consider vat pressure 400 and 600 and high percentage of hardwood concentration.
+
+
+
+
+
+
+
+
+
